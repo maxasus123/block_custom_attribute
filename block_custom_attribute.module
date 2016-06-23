@@ -1,0 +1,103 @@
+<?php
+
+/**
+ * @file
+ * Contains block_custom_attribute.module..
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Component\Utility\Html;
+use Drupal\block\Entity\Block;
+
+/**
+ * Implements hook_help().
+ */
+function block_custom_attribute_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the block_custom_attribute module.
+    case 'help.page.block_custom_attribute':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('This module custom attribute for block.') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function block_custom_attribute_form_block_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  /* @var \Drupal\block\BlockInterface $block */
+  $block = $form_state->getFormObject()->getEntity();
+  $default_class = 'block-' . Html::getClass($block->getPluginId());
+  $default_id = 'block-' . Html::getId($block->getPluginId());
+
+  // This will automatically be saved in the third party settings.
+  $form['third_party_settings']['#tree'] = TRUE;
+
+  $form['third_party_settings']['block_custom_attribute']['id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('CSS id'),
+    '#description' => t('Customize the styling of this block by adding id. (Default CSS id: %default_id)', array('%default_id' => $default_id)),
+    '#default_value' => !empty ($block->getThirdPartySetting('block_custom_attribute', 'id')) ? $block->getThirdPartySetting('block_custom_attribute', 'id') : [],
+  );
+
+  $form['third_party_settings']['block_custom_attribute']['classes'] = array(
+    '#type' => 'textfield',
+    '#title' => t('CSS class(es)'),
+    '#description' => t('Customize the styling of this block by adding CSS classes. Separate multiple classes by spaces. (Default CSS class: %default_class)', array('%default_class' => $default_class)),
+    '#default_value' => !empty ($block->getThirdPartySetting('block_custom_attribute', 'classes')) ? $block->getThirdPartySetting('block_custom_attribute', 'classes') : [],
+  );
+  $form['third_party_settings']['block_custom_attribute']['title_tag'] = array(
+    '#type' => 'select',
+    '#title' => t('Title Tag'),
+    '#description' => t('Customize the output of this title tag.'),
+    '#default_value' => !empty ($block->getThirdPartySetting('block_custom_attribute', 'title_tag')) ? $block->getThirdPartySetting('block_custom_attribute', 'title_tag') : 'div',
+    '#options' => array(
+      'nav' => 'nav',
+      'div' => 'div',
+      'span' => 'span',
+      'h1' => 'h1',
+      'h2' => 'h2',
+      'h3' => 'h3',
+      'h4' => 'h4',
+      'h5' => 'h5',
+      'h6' => 'h6',
+    ),
+  );
+  $form['third_party_settings']['block_custom_attribute']['block_tag'] = array(
+    '#type' => 'select',
+    '#title' => t('Block Tag'),
+    '#description' => t('Customize the type of this block tag.'),
+    '#default_value' => !empty ($block->getThirdPartySetting('block_custom_attribute', 'block_tag')) ? $block->getThirdPartySetting('block_custom_attribute', 'block_tag') : 'div',
+    '#options' => array(
+      'nav' => 'nav',
+      'div' => 'div',
+      'span' => 'span',
+    ),
+  );
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function block_custom_attribute_preprocess_block(&$variables) {
+  // Blocks coming from page manager widget does not have id.
+  if (!empty($variables['elements']['#id'])) {
+    $block = Block::load($variables['elements']['#id']);
+    $id = !empty ($block->getThirdPartySetting('block_custom_attribute', 'id')) ? $block->getThirdPartySetting('block_custom_attribute', 'id') : [];
+    $classes = !empty ($block->getThirdPartySetting('block_custom_attribute', 'classes')) ? explode(' ', $block->getThirdPartySetting('block_custom_attribute', 'classes')) : [];
+    $title_tag = !empty ($block->getThirdPartySetting('block_custom_attribute', 'title_tag')) ? $block->getThirdPartySetting('block_custom_attribute', 'title_tag') : 'div';
+    $block_tag = !empty ($block->getThirdPartySetting('block_custom_attribute', 'block_tag')) ? $block->getThirdPartySetting('block_custom_attribute', 'block_tag') : 'div';
+
+    if(!empty($id)): $variables['attributes']['id'] = $id; endif;
+    if(!empty($classes)): $variables['attributes']['class'] = $classes; endif;
+    $variables['title_tag'] = $title_tag;
+    $variables['block_tag'] = $block_tag;
+    $variables['use_container'] = !(empty($id) && empty($classes));
+
+    $variables['content']['#use_parent_container'] = $variables['use_container'];
+  }
+}

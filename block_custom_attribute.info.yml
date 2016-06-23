@@ -1,0 +1,8 @@
+name: Block Custom Attribute
+type: module
+description: This module custom attribute for block.
+core: 8.x
+package: Custom
+dependencies:
+  - block
+  - block_content
